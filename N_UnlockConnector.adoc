@@ -1,0 +1,178 @@
+:numbered:
+:toc: macro
+
+= OCPP 1.6: N. Unlock Connector
+v0.4 DRAFT, 2016-06-02
+:title-logo-image: ../media/logo.png
+
+[[disclaimer]]
+= Disclaimer
+Copyright © 2010 – 2016 Open Charge Alliance. All rights reserved.
+
+This document is made available under the _*Creative Commons Attribution-NoDerivatives 4.0 International Public License*_ (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
+
+
+*Version History*
+
+[cols="2,3,4,6",options="header",]
+|=======================================================================
+|*Version* |*Date* |*Author* |*Description*
+
+|0.4
+|2016-06-02
+|Jonel Timbergen +
+_ElaadNL_ +
+|RC1. Changes due to first comments by Technical Working Group.
+
+|0.3
+|2016-04-20
+|Jonel Timbergen +
+_ElaadNL_ +
+Robert de Leeuw +
+_IHomer_ +
+|RC1. First draft release of OCPP1.6 in new document structure.
+
+|0.2
+|2016-04-01
+|Jonel Timbergen +
+_ElaadNL_ +
+|Implemented comments made by Robert de Leeuw.
+
+|0.1
+|2016-03-30
+|Jonel Timbergen +
+_ElaadNL_ +
+|Added the two use cases for N. Unlock Connector.
+|=======================================================================
+
+<<<
+[[scope]]
+== Scope
+
+This functional block describes the functionality that enable the CPO (or indirect a third party) to unlock the Connector with a remote command.
+
+[[terminology-and-conventions]]
+== Terminology and Conventions
+
+n/a
+
+[[references]]
+=== References
+
+n/a
+
+<<<
+[[UseCases]]
+== Use cases
+
+[[n01_remotelyunlockconnector]]
+=== N01 - Remotely Unlock Connector
+
+[cols="^1,3,12",options="header",]
+|=======================================================================
+|*No.*  | *Type* | *Description*
+|*1*    | *Use case element name*  | Remotely Unlock Connector
+|*2*    | *ID*                     | N01
+|       | _Functional block_       | N. Unlock Connector
+|*3*    | *Objective(s)*           | To remotely unlock a Connector of a Charge Point.
+|*4*    | *Description*            | This use case covers how the Central System can request a Charge Point to unlock a Connector while there is no ongoing transaction. +
+|       | _Actors_                 | Charge Point, Central System, Connector, External Trigger
+|       | _Scenario description_   | *1.* An External Trigger triggers the Charge Point to unlock the Connector. +
+                                     *2.* The Charge Point sends <<unlockconnector.req,UnlockConnector.req>> . +
+                                     *3.* Upon receipt of <<unlockconnector.req,UnlockConnector.req>>, the Charge Point responds with <<unlockconnector.conf,UnlockConnector.conf>>. +
+                                     *4.* The response PDU indicates whether the Charge Point was able to unlock its Connector.
+|       | _Alternative scenario(s)_  | n/a
+|*5*    | *Prerequisite(s)*          | There is no ongoing transaction.
+|*6*    | *Postcondition(s)*         | *Successful postcondition:* +
+                                     The Charge Point was able to unlock the Connector. +
+                                     +
+                                     *Failure postcondition:* +
+                                     The Charge Point was _not_ able to unlock the Connector.
+|=======================================================================
+
+.Sequence Diagram: Unlock Connector
+image::media/UnlockConnectorNoTransaction.png[Unlock Connector,scaledwidth="70%",align="center"]
+
+[cols="1,2,6",options="noheader",]
+|=======================================================================
+|*7*    | *Error handling*         | _ConnectorLockFailure_ Failure to lock or unlock Connector. +
+                                     _UnlockCommand_ Central System sent an Unlock Connector command.
+|*8*    | *Remark(s)*              | An external trigger can be e.g. a Charge Point Operator or a EV Driver app. +
+                                     +
+                                      When trying to stop a running transaction, the Central System SHOULD use StopTransaction.req when possible. +
+                                      +
+                                     The purpose of this message: Help EV drivers that have problems unplugging their cable from the Charge Point in case of malfunction of the Connector cable retention. When a EV driver calls the CPO help-desk, an operator could manually trigger the sending of an <<unlockconnector.req,UnlockConnector.req>> to the Charge Point, forcing a new attempt to unlock the Connector. Hopefully this time the Connector unlocks and the EV driver can unplug the cable and drive away. +
+                                     +
+                                     <<unlockConnector.req,UnlockConnector.req>> is intended only for unlocking the cable retention lock on the Connector, not for unlocking a Connector access door.
+|*9*   | *Test cases*             | Test Case Root Id: 017
+|=======================================================================
+
+<<<
+==== N01 - Requirements
+
+_These requirements are normative._
+
+[width="100%", cols="^1,^1,^2,3,4,^1,2,2",options="header"]
+|=======================================================================
+| *CH*  | *CP/CS* | *ID* | *Precondition* | *Requirement definition*                                                                                                                                                          | *M/O/C* | *Rationale* | *Note*
+| 5.18 | CS | N01.FR.01  |                                                                       | The Central System SHALL be able to request a Charge Point to unlock a Connector.                                                        | M     |                                                                                            |
+| 5.18 | CP | N01.FR.02   | N01.FR.01                                                            | The Central System SHALL send an <<unlockconnector.req,UnlockConnector.req>>.                                                                                  | M     |                                                                                         |
+| 5.18 |    | N01.FR.03   |                                                                       | <<unlockconnector.req,UnlockConnector.req>> SHOULD NOT be used to remotely stop a running transaction, use the Remote Stop Transaction instead.              | C     |                                                                                            |
+| 5.18 | CP | N01.FR.04  | Upon receipt of an <<unlockconnector.req,UnlockConnector.req>>.       | The Charge Point SHALL respond with <<unlockconnector.conf,UnlockConnector.conf>>, indicating whether the Charge Point was able to unlock its Connector.                                                                          | M     |  |
+|=======================================================================
+
+<<<
+[[n02_remotelyunlockconnectorwithtransaction]]
+=== N02 - Remotely Unlock Connector - With Ongoing Transaction
+
+[cols="^1,3,12",options="header",]
+|=======================================================================
+|*No.*  | *Type* | *Description*
+|*1*    | *Use case element name*  | Unlock Connector - With Ongoing Transaction
+|*2*    | *ID*                     | N02
+|       | _Functional block_       | N. Unlock Connector
+|*3*    | *Objective(s)*           | To remotely unlock a Connector of a Charge Point, while there is an ongoing transaction.
+|*4*    | *Description*            | This use case covers how the Central System requests the Charge Point to unlock the Connector, while there is an ongoing transaction.
+|       | _Actors_                 | Charge Point, Central System, Connector, External Trigger,
+|       | _Scenario description_   |
+                                     *1.* An External Trigger initiates the Central System to send <<unlockconnector.req,UnlockConnector.req>>.
+                                     *2.* Upon receipt of <<unlockconnector.req,UnlockConnector.req>>, the Charge Point responds with <<unlockconnector.conf,UnlockConnector.conf>>. +
+                                     *3.* If there was a transaction in progress on the specific Connector, then Charge Point finishes the transaction first as described in <<stop-transaction,Stop Transaction>>.
+|       | _Alternative scenario(s)_  | n/a
+|*5*    | *Prerequisite(s)*          | There is an ongoing transaction.
+|*6*    | *Postcondition(s)*         | *Successful postcondition:* +
+                                    - The Charge Point is in _Idle_ state. +
+                                    - Connector is unlocked, if not permanently attached. +
+                                    - The Charge Point reports Connector as _Finishing_ until cable is removed from the Charge Point. +
+                                    +
+                                     *Failure postcondition:* +
+                                     n/a
+|=======================================================================
+
+.Sequence Diagram: Unlock Connector - With Transaction
+image::media/UnlockConnectorTransaction.png[Unlock Connector - With Transaction,scaledwidth="70%",align="center"]
+
+[cols="^1,3,12",options="noheader",]
+|=======================================================================
+|*7*    | *Error handling*         | *1.* Unlock Connector - not supported. Test Case Root Id: 029 +
+                                     *2.* Unlock Connector - unlock failure. Test Case Root Id: 030 +
+                                     *3.* Unlock Connector - unknown Connector. Test Case Root Id: 031 +
+|*8*    | *Remark(s)*                | An external trigger can be e.g. a Charge Point Operator or a EV Driver app. +
+                                     +
+                                     <<unlockconnector.req,UnlockConnector.req>> is intended only for unlocking the cable retention lock on the Connector, not for unlocking a Connector access door. +
+                                     +
+                                     If there was a transaction in progress on the specific Connector, the Charge Point SHALL finish the transaction first as described in <<stop-transaction,Stop Transaction>>. +
+|*9*   | *Test cases*             | Test Case Root Id: 018_1, 018_2
+|=======================================================================
+
+<<<
+==== N02 - Requirements
+
+_These requirements are normative._
+
+[width="100%", cols="^1,^1,^2,3,4,^1,2,2",options="header"]
+|=======================================================================
+| *CH*  | *CP/CS* | *ID* | *Precondition* | *Requirement definition*                                                                                                                                                          | *M/O/C* | *Rationale* | *Note*
+| 5.18 |   | N02.FR.01  |  | The response PDU SHALL indicate whether the Charge Point was able to unlock its Connector. | M     |                                                                                            |
+| 5.18 | CP | N02.FR.02   | If there was a transaction in progress on the specific Connector. | The Charge Point SHALL finish the transaction first. | M     | | As described in  <<stop-transaction,StopTransaction>>
+|=======================================================================
